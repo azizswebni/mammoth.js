@@ -3,6 +3,7 @@ var assert = require("assert");
 var documents = require("../lib/documents");
 var test = require("./test")(module);
 var convertElementToRawText = require("../lib/raw-text").convertElementToRawText;
+var convertElementToRawTextWithColor = require("../lib/raw-text").convertElementToRawTextWithColor;
 
 
 test('text element is converted to text content', function() {
@@ -58,4 +59,55 @@ test('non-text element without children is converted to empty string', function(
     var result = convertElementToRawText(element);
 
     assert.strictEqual(result, "");
+});
+
+test('text with color is extracted with color metadata', function() {
+    var run = new documents.Run(
+        [new documents.Text("Hello")],
+        {color: "FF0000"}
+    );
+    var element = new documents.Paragraph([run], {});
+
+    var result = convertElementToRawTextWithColor(element);
+
+    assert.deepEqual(result, [
+        {text: "Hello", color: "FF0000"},
+        {text: "\n\n", color: null}
+    ]);
+});
+
+test('text without color has null color metadata', function() {
+    var run = new documents.Run(
+        [new documents.Text("Hello")],
+        {}
+    );
+    var element = new documents.Paragraph([run], {});
+
+    var result = convertElementToRawTextWithColor(element);
+
+    assert.deepEqual(result, [
+        {text: "Hello", color: null},
+        {text: "\n\n", color: null}
+    ]);
+});
+
+test('multiple runs with different colors preserve color information', function() {
+    var paragraph = new documents.Paragraph([
+        new documents.Run(
+            [new documents.Text("Red")],
+            {color: "FF0000"}
+        ),
+        new documents.Run(
+            [new documents.Text(" Blue")],
+            {color: "0000FF"}
+        )
+    ], {});
+
+    var result = convertElementToRawTextWithColor(paragraph);
+
+    assert.deepEqual(result, [
+        {text: "Red", color: "FF0000"},
+        {text: " Blue", color: "0000FF"},
+        {text: "\n\n", color: null}
+    ]);
 });

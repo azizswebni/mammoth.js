@@ -390,6 +390,34 @@ test('highlighted runs can be configured with style mapping for specific highlig
 });
 
 
+test('text color is converted to inline style', function() {
+    var run = runOfText("Hello.", {color: "FF0000"});
+    var converter = new DocumentConverter();
+    return converter.convertToHtml(run).then(function(result) {
+        assert.equal(result.value, '<span style="color: #FF0000">Hello.</span>');
+    });
+});
+
+test('text without color is not wrapped in span', function() {
+    var run = runOfText("Hello.", {});
+    var converter = new DocumentConverter();
+    return converter.convertToHtml(run).then(function(result) {
+        assert.equal(result.value, 'Hello.');
+    });
+});
+
+test('multiple runs with different colors are wrapped separately', function() {
+    var paragraph = new documents.Paragraph([
+        runOfText("Red", {color: "FF0000"}),
+        runOfText(" Blue", {color: "0000FF"})
+    ]);
+    var converter = new DocumentConverter();
+    return converter.convertToHtml(paragraph).then(function(result) {
+        assert.equal(result.value, '<p><span style="color: #FF0000">Red</span><span style="color: #0000FF"> Blue</span></p>');
+    });
+});
+
+
 test('run styles are converted to HTML if mapping exists', function() {
     var run = runOfText("Hello.", {styleId: "Heading1Char", styleName: "Heading 1 Char"});
     var converter = new DocumentConverter({
